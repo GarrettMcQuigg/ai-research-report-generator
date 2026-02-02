@@ -4,7 +4,7 @@ import { AUTH_SIGNIN_ROUTE, DASHBOARD_ROUTE } from './packages/lib/routes';
 
 export const config = {
   matcher: [
-    // Protected page routes (main app)
+    // Protected page routes (main app) - everything under (main) directory
     '/dashboard/:path*',
     '/reports/:path*',
     '/settings/:path*',
