@@ -6,15 +6,96 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
-// Example User model
+// User model (database record linked to Supabase auth via user_metadata.userId)
 model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String  @map("password_hash")
+  name         String?
+
+  // Credits and subscription
+  credits          Int     @default(3) // Free reports on signup
+  subscriptionTier String  @default("free") @map("subscription_tier") // 'free', 'basic', 'premium'
+  stripeCustomerId String? @unique @map("stripe_customer_id")
+
+  // Status
+  isActive      Boolean @default(true) @map("is_active")
+  emailVerified Boolean @default(true) @map("email_verified")
+
+  // Relations
+  reports Report[]
+
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  @@map("users")
+}
+
+// Report workflow status
+enum ReportStatus {
+  PENDING
+  PLANNING
+  RESEARCHING
+  VALIDATING
+  CRITIQUING
+  WRITING
+  FORMATTING
+  COMPLETED
+  FAILED
+
+  @@map("report_status")
+}
+
+// Main report model
+model Report {
+  id           String       @id @default(cuid())
+  userId       String       @map("user_id")
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic        String
+  status       ReportStatus @default(PENDING)
+  inngestRunId String?      @unique @map("inngest_run_id")
+
+  // Agent outputs stored as JSON
+  researchPlan Json?   @map("research_plan")
+  findings     Json?
+  validation   Json?
+  critique     Json?
+  finalReport  String? @map("final_report") @db.Text
+
+  // Metadata
+  reportMetadata Json?   @map("report_metadata")
+  errorMessage   String? @map("error_message") @db.Text
+
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+// Research cache to reduce API costs
+model ResearchCache {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  queryHash String   @unique @map("query_hash")
+  query     String   @db.Text
+  results   Json
+  provider  String // 'tavily', 'serper', etc.
+  expiresAt DateTime @map("expires_at")
+  hitCount  Int      @default(1) @map("hit_count")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@index([queryHash])
+  @@map("research_cache")
 }
