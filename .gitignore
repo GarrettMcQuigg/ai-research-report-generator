@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+.claude
 
 # debug
 npm-debug.log*
@@ -39,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# guides (internal documentation)
+packages/guides/*
+
+# Todo (personal notes)
+TODO.md
+PRODUCTION_TODOS.md
+
+# prettier (code formatter)
+.prettierrc

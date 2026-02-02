@@ -1,7 +1,12 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+  transpilePackages: ['@packages/lib'],
+  images: {
+    dangerouslyAllowSVG: true,
+    domains: [],
+    formats: ['image/avif', 'image/webp']
+  }
 };
 
-export default nextConfig;
+module.exports = nextConfig;
