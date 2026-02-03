@@ -126,7 +126,6 @@ Synthesize the above sources into a comprehensive answer to the question. Return
     const result = await generateWithRetry(userPrompt, {
       system: systemPrompt,
       temperature: 0.6,
-      maxTokens: 2000,
       tier,
     });
 

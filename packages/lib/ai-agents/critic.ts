@@ -78,7 +78,6 @@ Provide your critique in valid JSON format.`;
       temperature,
       tier,
       system: CRITIC_SYSTEM_PROMPT,
-      maxTokens: 2000,
       retries: 3,
     });
 
@@ -137,7 +136,7 @@ export function validateCritique(critique: Critique): boolean {
   const hasValidConfidence = critique.confidence >= 0 && critique.confidence <= 1;
 
   // Check if overall assessment exists
-  const hasAssessment = critique.overallAssessment && critique.overallAssessment.length > 0;
+  const hasAssessment = Boolean(critique.overallAssessment && critique.overallAssessment.length > 0);
 
   return hasContent && hasValidConfidence && hasAssessment;
 }

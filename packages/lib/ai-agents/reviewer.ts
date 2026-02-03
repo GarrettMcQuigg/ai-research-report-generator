@@ -104,7 +104,6 @@ Return ONLY valid JSON, no additional text.`;
     const result = await generateWithRetry(userPrompt, {
       system: systemPrompt,
       temperature: 0.3, // Lower temperature for more consistent, careful editing
-      maxTokens: 8000, // Higher token limit for full report + review summary
       tier,
     });
 
@@ -217,7 +216,6 @@ Return ONLY valid JSON, no additional text.`;
     const result = await generateWithRetry(userPrompt, {
       system: systemPrompt,
       temperature: 0.2,
-      maxTokens: 500,
       tier,
     });
 

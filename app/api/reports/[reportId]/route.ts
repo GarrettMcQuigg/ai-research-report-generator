@@ -5,11 +5,11 @@ import { db } from '@/packages/lib/prisma/prisma-client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { reportId: string } }
+  { params }: { params: Promise<{ reportId: string }> }
 ) {
   try {
     const user = await getUser();
-    const { reportId } = params;
+    const { reportId } = await params;
 
     // Fetch report
     const report = await db.report.findUnique({

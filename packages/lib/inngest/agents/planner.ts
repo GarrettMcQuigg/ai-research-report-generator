@@ -37,7 +37,6 @@ Return ONLY valid JSON, no additional text.`;
     const result = await generateWithRetry(userPrompt, {
       system: systemPrompt,
       temperature: 0.7,
-      maxTokens: 1000,
       tier,
     });
 

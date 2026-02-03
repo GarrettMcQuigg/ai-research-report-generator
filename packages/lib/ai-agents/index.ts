@@ -9,7 +9,7 @@
 export { planResearch, type ResearchPlan } from './research-planner';
 
 // Agent 2: Researcher
-export { researchQuestion } from './researcher';
+export { conductResearch } from './researcher';
 
 // Agent 3: Critic
 export { critiqueResearch } from './critic';
