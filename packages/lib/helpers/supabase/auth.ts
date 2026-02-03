@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import type { Session } from '@supabase/supabase-js';
 import { User } from '@prisma/client';
-import prisma from '@/packages/lib/prisma/prisma-client';
+import { db } from '@/packages/lib/prisma/prisma-client';
 import { createClient } from '@/packages/lib/supabase/server';
 
 /**
@@ -63,7 +63,7 @@ export async function getUser(): Promise<User> {
   }
 
   // Fetch full user record from database
-  const user = await prisma.user.findUnique({
+  const user = await db.user.findUnique({
     where: { id: userId },
   });
 
@@ -132,7 +132,7 @@ export async function validateSession(): Promise<Session | null> {
 export async function verifyReportAccess(reportId: string): Promise<void> {
   const user = await getUser();
 
-  const report = await prisma.report.findUnique({
+  const report = await db.report.findUnique({
     where: { id: reportId },
   });
 

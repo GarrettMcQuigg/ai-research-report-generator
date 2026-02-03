@@ -1,15 +1,29 @@
 import { PrismaClient } from '@prisma/client';
 
-const prismaClientSingleton = () => {
-  return new PrismaClient();
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
 };
 
-declare global {
-  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
+export const db =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = db;
 }
 
-const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
+/**
+ * Get Prisma client with custom session context
+ * Useful for setting RLS variables or other session-level config
+ */
+export async function getPrismaWithContext(context: Record<string, string>) {
+  const contextString = JSON.stringify(context);
 
-export default prisma;
+  await db.$executeRawUnsafe(`
+    SET LOCAL request.jwt.claims = '${contextString}';
+  `);
 
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma;
+  return db;
+}

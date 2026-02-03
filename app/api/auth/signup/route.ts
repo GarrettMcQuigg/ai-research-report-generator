@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import bcrypt from 'bcrypt';
 import { createServiceClient } from '@/packages/lib/supabase/server';
-import prisma from '@/packages/lib/prisma/prisma-client';
+import { db } from '@/packages/lib/prisma/prisma-client';
 import { handleSuccess, handleBadRequest, handleError } from '@/packages/lib/helpers/api-response-handlers';
 
 export async function POST(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing user in database
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email },
     });
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create User record in Prisma database
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
         email,
         passwordHash,

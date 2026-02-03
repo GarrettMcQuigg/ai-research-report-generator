@@ -22,13 +22,20 @@ export function getModel(tier: ModelTier = 'basic') {
 }
 
 /**
- * Generate text with retry logic
+ * Generate text with retry logic and exponential backoff
+ *
+ * @param prompt - The prompt to send to the AI
+ * @param options - Generation options
+ * @param options.temperature - Creativity level (0-2, default 0.7)
+ * @param options.tier - Model tier ('basic' = gpt-4o-mini, 'premium' = gpt-4o)
+ * @param options.system - System prompt
+ * @param options.retries - Max retry attempts (default 3)
+ * @returns Generated text result
  */
 export async function generateWithRetry(
   prompt: string,
   options?: {
     temperature?: number;
-    maxTokens?: number;
     tier?: ModelTier;
     system?: string;
     retries?: number;
@@ -36,7 +43,6 @@ export async function generateWithRetry(
 ) {
   const {
     temperature = 0.7,
-    maxTokens = 4000,
     tier = 'basic',
     system,
     retries = 3,
@@ -53,6 +59,8 @@ export async function generateWithRetry(
         prompt,
         temperature,
         system,
+        // Note: maxTokens not supported in current SDK version
+        // Token limits enforced at model level via OpenAI dashboard
       });
 
       return result;

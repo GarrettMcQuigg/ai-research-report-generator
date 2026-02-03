@@ -1,11 +1,11 @@
-import prisma from './prisma-client';
+import { db } from './prisma-client';
 
 async function main() {
   console.log('Starting seed...');
 
   // Add your seed data here
   // Example:
-  // const user = await prisma.user.create({
+  // const user = await db.user.create({
   //   data: {
   //     email: 'test@example.com',
   //     name: 'Test User',
@@ -21,5 +21,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });

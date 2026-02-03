@@ -70,20 +70,118 @@ export function ResearchChat() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const topic = input.trim();
     setInput('');
     setIsLoading(true);
 
-    // TODO: Implement API call to generate research report
-    setTimeout(() => {
-      const assistantMessage: Message = {
+    try {
+      const { fetcher } = await import('@/packages/lib/helpers/fetcher');
+      const { API_REPORTS_GENERATE_ROUTE } = await import('@/packages/lib/routes');
+
+      const response = await fetcher({
+        url: API_REPORTS_GENERATE_ROUTE,
+        requestBody: { topic }
+      });
+
+      if (response.err) {
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `Sorry, I encountered an error: ${response.message}`,
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } else {
+        const { reportId } = response.content;
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `I've started researching "${topic}" for you! My team of AI agents are now:\n\n1. 📋 Planning the research strategy\n2. 🔍 Gathering information from trusted sources\n3. 🎯 Verifying and critiquing findings\n4. ✍️ Writing a comprehensive report\n5. ✅ Reviewing for accuracy and clarity\n\nYou'll receive the complete report shortly!`,
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // Poll for report completion
+        pollReportStatus(reportId, topic);
+      }
+    } catch (error) {
+      console.error('Error generating research:', error);
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `I'll start researching "${userMessage.content}" for you. This will involve multiple AI agents working together to gather information, verify sources, and generate a comprehensive report.`,
+        content: 'Sorry, something went wrong while processing your request. Please try again.',
         timestamp: new Date()
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
+  };
+
+  const pollReportStatus = async (reportId: string, topic: string) => {
+    const { fetcher } = await import('@/packages/lib/helpers/fetcher');
+    const { API_REPORTS_GET_ROUTE } = await import('@/packages/lib/routes');
+    const { HttpMethods } = await import('@/packages/lib/constants/http-methods');
+
+    const maxAttempts = 60; // Poll for up to 5 minutes (60 * 5 seconds)
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts++;
+
+      const response = await fetcher({
+        url: API_REPORTS_GET_ROUTE(reportId),
+        method: HttpMethods.GET
+      });
+
+      if (response.err) {
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Failed to check report status: ${response.message}`,
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setIsLoading(false);
+        return;
+      }
+
+      const report = response.content;
+
+      if (report.status === 'COMPLETED' && report.finalReport) {
+        const reportMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `# Research Report: ${topic}\n\n${report.finalReport}`,
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, reportMessage]);
+        setIsLoading(false);
+      } else if (report.status === 'FAILED') {
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Report generation failed: ${report.errorMessage || 'Unknown error'}`,
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+        setIsLoading(false);
+      } else if (attempts < maxAttempts) {
+        // Continue polling
+        setTimeout(poll, 5000); // Poll every 5 seconds
+      } else {
+        const timeoutMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: 'Report generation is taking longer than expected. Please check back later.',
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, timeoutMessage]);
+        setIsLoading(false);
+      }
+    };
+
+    poll();
   };
 
   const handleSelectPrompt = (prompt: string) => {

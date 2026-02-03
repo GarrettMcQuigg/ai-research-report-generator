@@ -11,3 +11,5 @@ export const SETTINGS_ROUTE = '/settings';
 // API routes
 export const API_ROUTE = '/api';
 export const API_AUTH_SIGNUP_ROUTE = `${API_ROUTE}/auth/signup`;
+export const API_REPORTS_GENERATE_ROUTE = `${API_ROUTE}/reports/generate`;
+export const API_REPORTS_GET_ROUTE = (reportId: string) => `${API_ROUTE}/reports/${reportId}`;
