@@ -1,46 +1,40 @@
-import { getUser } from '@/packages/lib/helpers/supabase/auth';
+import React from 'react';
+import { ResearchChat } from './_src/components/research-chat';
+import { CreditCard, Star, FileText } from 'lucide-react';
 
-export default async function DashboardPage() {
-  const user = await getUser();
+// Mock user data - replace with actual auth
+const user = {
+  credits: 250,
+  subscriptionTier: 'pro',
+  reports: 12
+};
 
+function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.name || 'User'}!</p>
+    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
+      <div className="size-10 rounded-lg bg-foreground/5 flex items-center justify-center">
+        <Icon className="size-5 text-foreground/60" />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+        <p className="text-xl font-semibold tracking-tight capitalize">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Credits" value={user.credits} icon={CreditCard} />
+          <StatCard label="Subscription" value={user.subscriptionTier} icon={Star} />
+          <StatCard label="Reports" value={user.reports} icon={FileText} />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Credits Card */}
-          <div className="border rounded-lg p-6 bg-card">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Available Credits</h3>
-            <p className="text-3xl font-bold">{user.credits}</p>
-          </div>
-
-          {/* Subscription Card */}
-          <div className="border rounded-lg p-6 bg-card">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Subscription</h3>
-            <p className="text-3xl font-bold capitalize">{user.subscriptionTier}</p>
-          </div>
-
-          {/* Reports Card */}
-          <div className="border rounded-lg p-6 bg-card">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Reports Generated</h3>
-            <p className="text-3xl font-bold">0</p>
-          </div>
-        </div>
-
-        <div className="mt-8 border rounded-lg p-6 bg-card">
-          <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
-          <p className="text-muted-foreground mb-4">
-            Welcome to the AI Research Report Generator! This platform helps you create comprehensive research reports using AI-powered agents.
-          </p>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>• Each report generation costs 1 credit</p>
-            <p>• You currently have {user.credits} credits available</p>
-            <p>• Reports are generated using a multi-agent workflow</p>
-          </div>
+        <div className="bg-card border border-border rounded-xl h-[calc(100vh-200px)] min-h-[500px] overflow-hidden">
+          <ResearchChat />
         </div>
       </div>
     </div>
