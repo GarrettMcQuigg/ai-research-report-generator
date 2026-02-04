@@ -25,15 +25,15 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string |
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className="mb-28 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Credits" value={user.credits} icon={CreditCard} />
           <StatCard label="Subscription" value={user.subscriptionTier} icon={Star} />
           <StatCard label="Reports" value={user.reports} icon={FileText} />
         </div>
 
-        <div className="bg-card border border-border rounded-xl h-[calc(100vh-200px)] min-h-[500px] overflow-hidden">
+        <div className="rounded-lg min-h-full max-h-[1000px] overflow-hidden">
           <ResearchChat />
         </div>
       </div>

@@ -27,15 +27,15 @@ function EmptyState({ onSelectPrompt }: { onSelectPrompt: (prompt: string) => vo
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Try an example</p>
           <div className="flex flex-col gap-2">
             {EXAMPLE_PROMPTS.map((prompt) => (
-              <button
+              <Button
                 key={prompt}
+                variant="outline"
                 onClick={() => onSelectPrompt(prompt)}
-                className="group flex items-center justify-between gap-4 w-full text-left px-4 py-3 rounded-xl border border-border 
-                bg-card hover:bg-accent/50 hover:border-foreground/10 transition-all duration-200 cursor-pointer"
+                className="group justify-between h-auto px-4 py-3 border-border hover:bg-accent/50 hover:border-foreground/10"
               >
                 <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">{prompt}</span>
                 <ArrowRight className="size-4 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -100,8 +100,6 @@ export function ResearchChat() {
           timestamp: new Date()
         };
         setMessages((prev) => [...prev, assistantMessage]);
-
-        // Poll for report completion
         pollReportStatus(reportId, topic);
       }
     } catch (error) {
@@ -189,7 +187,7 @@ export function ResearchChat() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-[600px]">
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <EmptyState onSelectPrompt={handleSelectPrompt} />
@@ -204,15 +202,15 @@ export function ResearchChat() {
         )}
       </div>
 
-      <div className="border-t border-border bg-background/80 backdrop-blur-sm p-4">
+      <div className="bg-background/80 backdrop-blur-sm p-4">
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 bg-muted/50 border border-border rounded-xl p-2 focus-within:border-foreground/20 focus-within:ring-2 focus-within:ring-foreground/5 transition-all duration-200">
+          <div className="flex items-center gap-3 bg-muted/50 border border-border rounded-xl p-2 dark:focus-within:border-white focus-within:border-black transition-all duration-200">
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Enter your research topic..."
               disabled={isLoading}
-              className="flex-1 h-10 border-0 bg-transparent shadow-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground/70"
+              className="flex-1 h-10 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm placeholder:text-muted-foreground/70"
             />
             <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="size-10 rounded-lg shrink-0">
               <Send className="size-4" />

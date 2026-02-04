@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { MoonIcon, SunIcon } from 'lucide-react';
+import { Button } from '@/packages/lib/components/button';
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -19,23 +20,25 @@ export function ThemeToggle() {
   }
 
   return (
-    <button
+    <Button
       type="button"
-      className="bg-transparent cursor-pointer transition-all duration-200 hover:scale-110"
+      variant="ghost"
+      size="icon-sm"
+      className="hover:scale-110"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {theme === 'dark' ? (
         <MoonIcon
-          className="h-5 w-5 text-foreground hover:text-muted-foreground transition-colors duration-200"
+          className="h-5 w-5 hover:text-muted-foreground transition-colors duration-200"
           aria-hidden="true"
         />
       ) : (
         <SunIcon
-          className="h-5 w-5 text-foreground hover:text-muted-foreground transition-colors duration-200"
+          className="h-5 w-5 hover:text-muted-foreground transition-colors duration-200"
           aria-hidden="true"
         />
       )}
-    </button>
+    </Button>
   );
 }
