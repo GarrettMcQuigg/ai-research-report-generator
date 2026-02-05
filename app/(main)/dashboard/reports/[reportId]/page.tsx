@@ -13,9 +13,13 @@ interface Report {
   topic: string;
   status: string;
   finalReport: string | null;
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   researchPlan: any;
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   findings: any;
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   critique: any;
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
   reportMetadata: any;
   errorMessage: string | null;
   createdAt: string;
@@ -173,8 +177,8 @@ export default function ReportDetailPage() {
   const hasContent = report.finalReport || report.status === 'FAILED';
 
   return (
-    <div className="h-[calc(100vh-68px)] overflow-y-auto bg-background">
-      <div className="mx-auto px-4 py-6 max-w-4xl">
+    <div className="h-full overflow-y-auto bg-background">
+      <div className="mx-auto px-4 pt-[84px] pb-6 max-w-4xl">
         {/* Report Header */}
         <div className="mb-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
@@ -196,7 +200,7 @@ export default function ReportDetailPage() {
               {!hasContent ? (
                 <EmptyState />
               ) : (
-                <div className="p-6 space-y-6 max-w-3xl mx-auto">
+                <div className="p-6 space-y-6 max-w-3xl mx-auto overflow-x-hidden">
                   {messages.map((message) => (
                     <MessageBubble key={message.id} message={message} />
                   ))}

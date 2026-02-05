@@ -1,9 +1,8 @@
-import { NextRequest } from 'next/server';
 import { handleError, handleSuccess } from '@/packages/lib/helpers/api-response-handlers';
 import { getUser } from '@/packages/lib/helpers/supabase/auth';
 import { db } from '@/packages/lib/prisma/prisma-client';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await getUser();
 

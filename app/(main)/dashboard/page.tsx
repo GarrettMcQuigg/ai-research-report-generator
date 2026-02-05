@@ -25,8 +25,8 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string |
 
 export default function DashboardPage() {
   return (
-    <div className="bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="bg-background h-full overflow-y-auto">
+      <div className="container mx-auto px-4 pt-[20px] pb-6 max-w-4xl">
         <div className="mb-28 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Credits" value={user.credits} icon={CreditCard} />
           <StatCard label="Subscription" value={user.subscriptionTier} icon={Star} />

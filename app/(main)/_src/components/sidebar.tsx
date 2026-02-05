@@ -85,7 +85,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-card border-r border-border h-screen sticky top-0 flex flex-col">
+    <div className="w-64 bg-card border-r border-border h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <Button onClick={() => router.push('/dashboard')} className="w-full">

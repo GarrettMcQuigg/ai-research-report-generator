@@ -188,7 +188,7 @@ export function ResearchChat() {
 
   return (
     <div className="flex flex-col min-h-[600px]">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
         {messages.length === 0 ? (
           <EmptyState onSelectPrompt={handleSelectPrompt} />
         ) : (
