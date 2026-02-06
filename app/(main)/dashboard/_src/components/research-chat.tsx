@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/packages/lib/components/button';
 import { Input } from '@/packages/lib/components/input';
-import { Send, Sparkles, ArrowRight } from 'lucide-react';
+import { Send, Sparkles, ArrowRight, X } from 'lucide-react';
 import { TypingIndicator } from '@/packages/lib/components/typing-indicator';
 import { Message, MessageBubble } from '@/packages/lib/components/message-bubble';
+import { ReportStatusIndicator } from '@/packages/lib/components/report-status-indicator';
 
 const EXAMPLE_PROMPTS = ['The impact of artificial intelligence on healthcare', 'Latest developments in renewable energy', 'History and future of quantum computing'];
 
@@ -44,11 +46,18 @@ function EmptyState({ onSelectPrompt }: { onSelectPrompt: (prompt: string) => vo
   );
 }
 
+type ReportStatus = 'PENDING' | 'PLANNING' | 'RESEARCHING' | 'VALIDATING' | 'CRITIQUING' | 'WRITING' | 'FORMATTING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
 export function ResearchChat() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentReportStatus, setCurrentReportStatus] = useState<ReportStatus | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<string>('');
+  const [currentReportId, setCurrentReportId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,6 +66,35 @@ export function ResearchChat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Clear messages when "new" search param changes (New Chat clicked)
+  useEffect(() => {
+    const newParam = searchParams.get('new');
+    if (newParam) {
+      // Clear all state
+      setMessages([]);
+      setInput('');
+      setIsLoading(false);
+      setCurrentReportStatus(null);
+      setCurrentTopic('');
+      setCurrentReportId(null);
+
+      // Clear polling interval
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    }
+  }, [searchParams]);
+
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +111,8 @@ export function ResearchChat() {
     const topic = input.trim();
     setInput('');
     setIsLoading(true);
+    setCurrentTopic(topic);
+    setCurrentReportStatus('PENDING');
 
     try {
       const { fetcher } = await import('@/packages/lib/helpers/fetcher');
@@ -91,8 +131,11 @@ export function ResearchChat() {
           timestamp: new Date()
         };
         setMessages((prev) => [...prev, errorMessage]);
+        setIsLoading(false);
+        setCurrentReportStatus(null);
       } else {
         const { reportId } = response.content;
+        setCurrentReportId(reportId);
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -101,6 +144,7 @@ export function ResearchChat() {
         };
         setMessages((prev) => [...prev, assistantMessage]);
         pollReportStatus(reportId, topic);
+        // Don't set isLoading to false here - let polling handle it
       }
     } catch (error) {
       console.error('Error generating research:', error);
@@ -111,8 +155,8 @@ export function ResearchChat() {
         timestamp: new Date()
       };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
+      setCurrentReportStatus(null);
     }
   };
 
@@ -133,18 +177,31 @@ export function ResearchChat() {
       });
 
       if (response.err) {
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          role: 'assistant',
-          content: `Failed to check report status: ${response.message}`,
-          timestamp: new Date()
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-        setIsLoading(false);
+        // Don't immediately fail on first error - could be a transient issue
+        // Only fail after multiple consecutive errors
+        if (attempts >= 3) {
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `Failed to check report status: ${response.message}`,
+            timestamp: new Date()
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+          setIsLoading(false);
+          setCurrentReportId(null);
+          setCurrentReportStatus(null);
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        }
         return;
       }
 
       const report = response.content;
+
+      // Update status indicator
+      setCurrentReportStatus(report.status as ReportStatus);
 
       if (report.status === 'COMPLETED' && report.finalReport) {
         const reportMessage: Message = {
@@ -155,6 +212,12 @@ export function ResearchChat() {
         };
         setMessages((prev) => [...prev, reportMessage]);
         setIsLoading(false);
+        setCurrentReportId(null);
+        setCurrentReportStatus(null);
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
       } else if (report.status === 'FAILED') {
         const errorMessage: Message = {
           id: Date.now().toString(),
@@ -164,9 +227,23 @@ export function ResearchChat() {
         };
         setMessages((prev) => [...prev, errorMessage]);
         setIsLoading(false);
+        setCurrentReportId(null);
+        setCurrentReportStatus(null);
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      } else if (report.status === 'CANCELLED') {
+        // Report was cancelled - already have the message, just stop polling
+        setIsLoading(false);
+        setCurrentReportId(null);
+        setCurrentReportStatus(null);
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
       } else if (attempts < maxAttempts) {
-        // Continue polling
-        setTimeout(poll, 5000); // Poll every 5 seconds
+        // Continue polling - interval is already set
       } else {
         const timeoutMessage: Message = {
           id: Date.now().toString(),
@@ -176,23 +253,91 @@ export function ResearchChat() {
         };
         setMessages((prev) => [...prev, timeoutMessage]);
         setIsLoading(false);
+        setCurrentReportId(null);
+        setCurrentReportStatus(null);
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
       }
     };
 
+    // Initial poll
     poll();
+    // Set up interval for subsequent polls
+    pollingIntervalRef.current = setInterval(poll, 5000);
   };
 
   const handleSelectPrompt = (prompt: string) => {
     setInput(prompt);
   };
 
+  const handleCancelReport = async () => {
+    if (!currentReportId) return;
+
+    try {
+      const { fetcher } = await import('@/packages/lib/helpers/fetcher');
+      const { API_REPORTS_CANCEL_ROUTE } = await import('@/packages/lib/routes');
+
+      // Clear polling interval
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+
+      // Call cancel API
+      const response = await fetcher({
+        url: API_REPORTS_CANCEL_ROUTE(currentReportId),
+        requestBody: {}
+      });
+
+      if (response.err) {
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `Failed to cancel report: ${response.message}`,
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } else {
+        const cancelMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: 'Report generation has been cancelled.',
+          timestamp: new Date()
+        };
+        setMessages((prev) => [...prev, cancelMessage]);
+      }
+
+      // Clear loading state
+      setIsLoading(false);
+      setCurrentReportId(null);
+      setCurrentReportStatus(null);
+      setCurrentTopic('');
+    } catch (error) {
+      console.error('Error cancelling report:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Failed to cancel report. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setIsLoading(false);
+      setCurrentReportId(null);
+      setCurrentReportStatus(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-[600px]">
-      <div className="flex-1">
+    <>
+      <div className="space-y-6 pb-24">
         {messages.length === 0 ? (
-          <EmptyState onSelectPrompt={handleSelectPrompt} />
+          <div className="min-h-[500px] flex items-center justify-center">
+            <EmptyState onSelectPrompt={handleSelectPrompt} />
+          </div>
         ) : (
-          <div className="p-6 space-y-6 max-w-3xl mx-auto">
+          <div className="space-y-6">
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} />
             ))}
@@ -202,23 +347,36 @@ export function ResearchChat() {
         )}
       </div>
 
-      <div className="bg-background/80 backdrop-blur-sm p-4">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 bg-muted/50 border border-border rounded-xl p-2 dark:focus-within:border-white focus-within:border-black transition-all duration-200">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Enter your research topic..."
-              disabled={isLoading}
-              className="flex-1 h-10 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm placeholder:text-muted-foreground/70"
-            />
-            <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="size-10 rounded-lg shrink-0">
-              <Send className="size-4" />
-              <span className="sr-only">Send message</span>
-            </Button>
-          </div>
-        </form>
+      {/* Sticky input at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm py-4 ml-64">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <form onSubmit={handleSubmit}>
+            <div className="flex items-center gap-3 bg-muted/50 border border-border rounded-xl p-2 dark:focus-within:border-white focus-within:border-black transition-all duration-200">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Enter your research topic..."
+                disabled={isLoading}
+                className="flex-1 h-10 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm placeholder:text-muted-foreground/70"
+              />
+              {isLoading ? (
+                <Button type="button" onClick={handleCancelReport} variant="destructive" size="icon" className="size-10 rounded-lg shrink-0">
+                  <X className="size-4" />
+                  <span className="sr-only">Cancel report</span>
+                </Button>
+              ) : (
+                <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="size-10 rounded-lg shrink-0">
+                  <Send className="size-4" />
+                  <span className="sr-only">Send message</span>
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+
+      {/* Status Indicator - Fixed position */}
+      {currentReportStatus && <ReportStatusIndicator status={currentReportStatus} topic={currentTopic} />}
+    </>
   );
 }

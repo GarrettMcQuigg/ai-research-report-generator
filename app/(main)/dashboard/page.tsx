@@ -1,13 +1,9 @@
 import React from 'react';
 import { ResearchChat } from './_src/components/research-chat';
 import { CreditCard, Star, FileText } from 'lucide-react';
-
-// Mock user data - replace with actual auth
-const user = {
-  credits: 250,
-  subscriptionTier: 'pro',
-  reports: 12
-};
+import { getUser } from '@/packages/lib/helpers/supabase/auth';
+import { handleUnauthorized } from '@/packages/lib/helpers/api-response-handlers';
+import { db } from '@/packages/lib/prisma/prisma-client';
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string }> }) {
   return (
@@ -23,19 +19,43 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string |
   );
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const currentUser = await getUser();
+
+  if (!currentUser) {
+    return handleUnauthorized();
+  }
+
+  let reports = [];
+  try {
+    reports = await db.report.findMany({
+      where: {
+        userId: currentUser.id
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        id: true,
+        topic: true,
+        status: true,
+        createdAt: true
+      }
+    });
+  } catch (error) {
+    console.error('Failed to fetch reports:', error);
+  }
+
   return (
     <div className="bg-background h-full overflow-y-auto">
-      <div className="container mx-auto px-4 pt-[20px] pb-6 max-w-4xl">
-        <div className="mb-28 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard label="Credits" value={user.credits} icon={CreditCard} />
-          <StatCard label="Subscription" value={user.subscriptionTier} icon={Star} />
-          <StatCard label="Reports" value={user.reports} icon={FileText} />
+      <div className="container mx-auto px-4 pt-[20px] pb-6 max-w-4xl min-h-full">
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Credits" value={currentUser.credits} icon={CreditCard} />
+          <StatCard label="Subscription" value={currentUser.subscriptionTier} icon={Star} />
+          <StatCard label="Reports" value={reports.length} icon={FileText} />
         </div>
 
-        <div className="rounded-lg min-h-full max-h-[1000px] overflow-hidden">
-          <ResearchChat />
-        </div>
+        <ResearchChat />
       </div>
     </div>
   );

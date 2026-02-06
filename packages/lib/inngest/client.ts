@@ -1,5 +1,4 @@
 import { Inngest } from 'inngest';
-import type { Events } from './types';
 
 /**
  * Inngest client for orchestrating AI research workflows

@@ -14,3 +14,5 @@ export const API_AUTH_SIGNUP_ROUTE = `${API_ROUTE}/auth/signup`;
 export const API_REPORTS_GENERATE_ROUTE = `${API_ROUTE}/reports/generate`;
 export const API_REPORTS_LIST_ROUTE = `${API_ROUTE}/reports`;
 export const API_REPORTS_GET_ROUTE = (reportId: string) => `${API_ROUTE}/reports/${reportId}`;
+export const API_REPORTS_CANCEL_ROUTE = (reportId: string) => `${API_ROUTE}/reports/${reportId}/cancel`;
+export const API_REPORTS_DELETE_ROUTE = (reportId: string) => `${API_ROUTE}/reports/${reportId}`;

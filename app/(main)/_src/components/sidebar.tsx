@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { CirclePlus } from 'lucide-react';
 import { Button } from '@/packages/lib/components/button';
 import { fetcher } from '@/packages/lib/helpers/fetcher';
-import { API_REPORTS_LIST_ROUTE } from '@/packages/lib/routes';
+import { API_REPORTS_LIST_ROUTE, DASHBOARD_ROUTE } from '@/packages/lib/routes';
 import { HttpMethods } from '@/packages/lib/constants/http-methods';
 
 interface Report {
@@ -24,6 +24,11 @@ export function Sidebar() {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  // Refresh reports list when pathname changes (e.g., after deletion and navigation)
+  useEffect(() => {
+    fetchReports();
+  }, [pathname]);
 
   const fetchReports = async () => {
     try {
@@ -46,6 +51,8 @@ export function Sidebar() {
         return 'text-green-500/70';
       case 'FAILED':
         return 'text-red-500/70';
+      case 'CANCELLED':
+        return 'text-gray-500/70';
       case 'PENDING':
       case 'PLANNING':
       case 'RESEARCHING':
@@ -84,11 +91,16 @@ export function Sidebar() {
     router.push(`/dashboard/reports/${reportId}`);
   };
 
+  const handleNewChat = () => {
+    // Add timestamp to force component remount and clear state
+    router.push(`${DASHBOARD_ROUTE}?new=${Date.now()}`);
+  };
+
   return (
-    <div className="w-64 bg-card border-r border-border h-full flex flex-col">
+    <div className="w-64 bg-card border-r border-border h-full flex flex-col z-10">
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <Button onClick={() => router.push('/dashboard')} className="w-full">
+        <Button onClick={handleNewChat} className="w-full">
           <CirclePlus className="size-4" />
           New chat
         </Button>

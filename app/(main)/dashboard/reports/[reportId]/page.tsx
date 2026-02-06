@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Sparkles, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Sparkles, Clock, CheckCircle2, XCircle, Loader2, Ban, Trash2 } from 'lucide-react';
 import { fetcher } from '@/packages/lib/helpers/fetcher';
-import { API_REPORTS_GET_ROUTE } from '@/packages/lib/routes';
+import { API_REPORTS_GET_ROUTE, API_REPORTS_DELETE_ROUTE, DASHBOARD_ROUTE } from '@/packages/lib/routes';
 import { HttpMethods } from '@/packages/lib/constants/http-methods';
 import { Message, MessageBubble } from '@/packages/lib/components/message-bubble';
+import { Button } from '@/packages/lib/components/button';
 
 interface Report {
   id: string;
@@ -33,6 +34,8 @@ function StatusBadge({ status }: { status: string }) {
         return { icon: CheckCircle2, text: 'Completed', className: 'bg-green-500/10 text-green-500 border-green-500/20' };
       case 'FAILED':
         return { icon: XCircle, text: 'Failed', className: 'bg-red-500/10 text-red-500 border-red-500/20' };
+      case 'CANCELLED':
+        return { icon: Ban, text: 'Cancelled', className: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
       case 'PENDING':
         return { icon: Clock, text: 'Pending', className: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' };
       case 'PLANNING':
@@ -80,16 +83,18 @@ function EmptyState() {
 
 export default function ReportDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const reportId = params.reportId as string;
   const [report, setReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchReport();
     // Poll for updates if report is in progress
     const interval = setInterval(() => {
-      if (report?.status && !['COMPLETED', 'FAILED'].includes(report.status)) {
+      if (report?.status && !['COMPLETED', 'FAILED', 'CANCELLED'].includes(report.status)) {
         fetchReport();
       }
     }, 5000);
@@ -126,6 +131,33 @@ export default function ReportDetailPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleDeleteReport = async () => {
+    if (!report) return;
+
+    const confirmed = window.confirm('Are you sure you want to delete this report? This action cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await fetcher({
+        url: API_REPORTS_DELETE_ROUTE(reportId),
+        method: HttpMethods.DELETE
+      });
+
+      if (response.err) {
+        alert(`Failed to delete report: ${response.message}`);
+        setIsDeleting(false);
+      } else {
+        // Navigate back to dashboard after successful deletion
+        router.push(DASHBOARD_ROUTE);
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      alert('Failed to delete report. Please try again.');
+      setIsDeleting(false);
+    }
   };
 
   if (isLoading && !report) {
@@ -172,20 +204,37 @@ export default function ReportDetailPage() {
       content: `Report generation failed: ${report.errorMessage || 'Unknown error'}`,
       timestamp: new Date()
     });
+  } else if (report.status === 'CANCELLED') {
+    messages.push({
+      id: '2',
+      role: 'assistant',
+      content: 'Report generation has been cancelled.',
+      timestamp: new Date()
+    });
   }
 
-  const hasContent = report.finalReport || report.status === 'FAILED';
+  const hasContent = report.finalReport || report.status === 'FAILED' || report.status === 'CANCELLED';
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto px-4 pt-[84px] pb-6 max-w-4xl">
+      <div className="mx-auto px-4 pt-[16px] pb-6 max-w-4xl">
         {/* Report Header */}
         <div className="mb-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <h1 className="text-2xl font-semibold tracking-tight truncate">{report.topic}</h1>
               <StatusBadge status={report.status} />
             </div>
+            <Button
+              onClick={handleDeleteReport}
+              disabled={isDeleting}
+              variant="ghost"
+              size="icon"
+              className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
+              title="Delete report"
+            >
+              <Trash2 className="size-4" />
+            </Button>
           </div>
           <div className="flex items-center justify-between w-full mt-2">
             <p className="text-sm text-muted-foreground">Created {formatDate(report.createdAt)}</p>

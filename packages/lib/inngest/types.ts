@@ -11,6 +11,19 @@ export type Events = {
       tier?: 'basic' | 'premium';
     };
   };
+  'research/report.requested': {
+    data: {
+      reportId: string;
+      topic: string;
+      userId: string;
+    };
+  };
+  'research/report.cancelled': {
+    data: {
+      reportId: string;
+      userId: string;
+    };
+  };
   'research/report.completed': {
     data: {
       reportId: string;

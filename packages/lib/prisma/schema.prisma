@@ -49,6 +49,7 @@ enum ReportStatus {
   FORMATTING
   COMPLETED
   FAILED
+  CANCELLED
 
   @@map("report_status")
 }
