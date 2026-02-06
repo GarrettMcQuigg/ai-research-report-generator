@@ -1,9 +1,10 @@
 import React from 'react';
+import { redirect } from 'next/navigation';
 import { ResearchChat } from './_src/components/research-chat';
 import { CreditCard, Star, FileText } from 'lucide-react';
 import { getUser } from '@/packages/lib/helpers/supabase/auth';
-import { handleUnauthorized } from '@/packages/lib/helpers/api-response-handlers';
 import { db } from '@/packages/lib/prisma/prisma-client';
+import { AUTH_SIGNIN_ROUTE } from '@/packages/lib/routes';
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string }> }) {
   return (
@@ -23,7 +24,7 @@ export default async function DashboardPage() {
   const currentUser = await getUser();
 
   if (!currentUser) {
-    return handleUnauthorized();
+    redirect(AUTH_SIGNIN_ROUTE);
   }
 
   let reports = [];

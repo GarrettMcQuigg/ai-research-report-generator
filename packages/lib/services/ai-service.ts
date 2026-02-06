@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { generateText, type GenerateTextResult } from 'ai';
+import { generateText } from 'ai';
 
 /**
  * AI Model Configuration
@@ -59,8 +59,6 @@ export async function generateWithRetry(
         prompt,
         temperature,
         system,
-        // Note: maxTokens not supported in current SDK version
-        // Token limits enforced at model level via OpenAI dashboard
       });
 
       return result;

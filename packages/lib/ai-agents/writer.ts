@@ -68,7 +68,7 @@ Format:
   const findingsSummary = findings
     .map((finding, idx) => {
       const sources = finding.sources
-        .map((s, sIdx) => `  - [${s.title}](${s.url})\n    ${s.snippet}`)
+        .map((s) => `  - [${s.title}](${s.url})\n    ${s.snippet}`)
         .join('\n');
 
       return `Question ${idx + 1}: ${finding.question}

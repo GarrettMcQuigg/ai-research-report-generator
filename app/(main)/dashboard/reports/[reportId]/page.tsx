@@ -100,6 +100,7 @@ export default function ReportDetailPage() {
     }, 5000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId, report?.status]);
 
   const fetchReport = async () => {

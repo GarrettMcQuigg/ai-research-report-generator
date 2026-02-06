@@ -105,7 +105,7 @@ export async function getCurrentUserId(): Promise<string> {
 export async function requireAuth(): Promise<User> {
   try {
     return await getUser();
-  } catch (error) {
+  } catch {
     throw new Response('Unauthorized', { status: 401 });
   }
 }

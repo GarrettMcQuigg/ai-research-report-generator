@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { AUTH_SIGNIN_ROUTE, DASHBOARD_ROUTE } from './packages/lib/routes';
+import { AUTH_SIGNIN_ROUTE } from './packages/lib/routes';
 
 export const config = {
   matcher: [

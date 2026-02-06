@@ -4,6 +4,7 @@ import { ResponseOptions } from '@/packages/lib/helpers/api-response-handlers';
 
 type FetcherOptions = {
   url: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requestBody?: any;
   formData?: FormData;
   method?: HttpMethods;

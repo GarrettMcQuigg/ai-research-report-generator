@@ -14,8 +14,6 @@ interface ReportStatusIndicatorProps {
   className?: string;
 }
 
-const STATUS_ORDER: ReportStatus[] = ['PENDING', 'PLANNING', 'RESEARCHING', 'VALIDATING', 'CRITIQUING', 'WRITING', 'FORMATTING', 'COMPLETED'];
-
 interface StatusConfig {
   icon: React.ComponentType<{ className?: string }>;
   label: string;

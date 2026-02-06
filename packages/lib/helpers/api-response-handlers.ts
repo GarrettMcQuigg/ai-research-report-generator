@@ -4,7 +4,9 @@ import { cookies } from 'next/headers';
 
 export type ResponseOptions = {
   message?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   err?: any;
 };
 
@@ -12,7 +14,7 @@ function createResponseHandler(defaultMessage: string, statusCode: number) {
   return (options?: ResponseOptions) => {
     const { message, content, err } = options || {};
 
-    let response: ResponseOptions = {
+    const response: ResponseOptions = {
       message: message || defaultMessage
     };
     if (message !== undefined) response.message = message;

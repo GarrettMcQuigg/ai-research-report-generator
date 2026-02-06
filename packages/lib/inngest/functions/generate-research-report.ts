@@ -19,7 +19,7 @@ export const generateResearchReport = inngest.createFunction(
   },
   { event: 'research/report.requested' },
   async ({ event, step }) => {
-    const { reportId, topic, userId } = event.data;
+    const { reportId, topic } = event.data;
 
     try {
       // Step 1: Research Planning
@@ -33,6 +33,7 @@ export const generateResearchReport = inngest.createFunction(
 
         await db.report.update({
           where: { id: reportId },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           data: { researchPlan: plan as any }
         });
 
@@ -54,6 +55,7 @@ export const generateResearchReport = inngest.createFunction(
 
         await db.report.update({
           where: { id: reportId },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           data: { findings: research as any }
         });
 
@@ -75,6 +77,7 @@ export const generateResearchReport = inngest.createFunction(
 
         await db.report.update({
           where: { id: reportId },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           data: { critique: critiqueResult as any }
         });
 
@@ -99,7 +102,7 @@ export const generateResearchReport = inngest.createFunction(
       });
 
       // Step 5: Review and Finalize Report
-      const finalReport = await step.run('review-report', async () => {
+      await step.run('review-report', async () => {
         await db.report.update({
           where: { id: reportId },
           data: { status: 'FORMATTING' }
@@ -117,6 +120,7 @@ export const generateResearchReport = inngest.createFunction(
               reviewSummary: reviewed.reviewSummary,
               wordCount: reviewed.finalReport.split(/\s+/).length,
               sourceCount: findings.summary.totalSources
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any
           }
         });
