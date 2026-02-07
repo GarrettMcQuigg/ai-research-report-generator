@@ -52,14 +52,23 @@ export async function getUser(): Promise<User> {
   const supabaseUser = await getCurrentUser();
 
   if (!supabaseUser) {
-    throw new Error('Unauthorized: No user session');
+    console.error('[AUTH_ERROR]', {
+      reason: 'no_session',
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Authentication failed');
   }
 
   // Extract database userId from user_metadata
   const userId = supabaseUser.user_metadata?.userId;
 
   if (!userId) {
-    throw new Error('Unauthorized: No userId in user metadata');
+    console.error('[AUTH_ERROR]', {
+      reason: 'missing_user_metadata',
+      supabaseUserId: supabaseUser.id,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Authentication failed');
   }
 
   // Fetch full user record from database
@@ -68,12 +77,22 @@ export async function getUser(): Promise<User> {
   });
 
   if (!user) {
-    throw new Error('Unauthorized: User not found in database');
+    console.error('[AUTH_ERROR]', {
+      reason: 'user_not_found_in_database',
+      userId,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Authentication failed');
   }
 
   // Check account status
   if (!user.isActive) {
-    throw new Error('Account is inactive');
+    console.warn('[AUTH_WARNING]', {
+      reason: 'account_inactive',
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Your account is currently inactive');
   }
 
   return user;
@@ -86,13 +105,22 @@ export async function getCurrentUserId(): Promise<string> {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error('Unauthorized: No user session');
+    console.error('[AUTH_ERROR]', {
+      reason: 'no_session',
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Authentication failed');
   }
 
   const userId = user.user_metadata?.userId;
 
   if (!userId) {
-    throw new Error('Unauthorized: No userId in user metadata');
+    console.error('[AUTH_ERROR]', {
+      reason: 'missing_user_metadata',
+      supabaseUserId: user.id,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Authentication failed');
   }
 
   return userId;
@@ -136,7 +164,24 @@ export async function verifyReportAccess(reportId: string): Promise<void> {
     where: { id: reportId },
   });
 
-  if (!report || report.userId !== user.id) {
-    throw new Error('Forbidden: Access to this report is denied');
+  if (!report) {
+    console.warn('[ACCESS_DENIED]', {
+      reason: 'report_not_found',
+      reportId,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Resource not found');
+  }
+
+  if (report.userId !== user.id) {
+    console.warn('[ACCESS_DENIED]', {
+      reason: 'unauthorized_report_access',
+      reportId,
+      userId: user.id,
+      reportOwnerId: report.userId,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('Access denied');
   }
 }

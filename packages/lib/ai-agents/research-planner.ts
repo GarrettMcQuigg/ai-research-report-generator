@@ -1,4 +1,5 @@
 import { generateWithRetry, parseJSONResponse } from '@/packages/lib/services/ai-service';
+import { logger } from '@/packages/lib/logger';
 
 /**
  * Research Plan Structure
@@ -106,7 +107,7 @@ Generate 5-7 focused research questions and 3-5 key areas to investigate. Return
 
     return plan;
   } catch (error) {
-    console.error('Research planning failed:', error);
+    logger.error('Research planning failed', error);
     throw new Error(`Failed to plan research: ${(error as Error).message}`);
   }
 }

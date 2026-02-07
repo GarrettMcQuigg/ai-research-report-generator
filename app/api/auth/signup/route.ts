@@ -3,43 +3,85 @@ import bcrypt from 'bcrypt';
 import { createServiceClient } from '@/packages/lib/supabase/server';
 import { db } from '@/packages/lib/prisma/prisma-client';
 import { handleSuccess, handleBadRequest, handleError } from '@/packages/lib/helpers/api-response-handlers';
+import { isValidEmail, validatePassword, isValidName, getErrorMessage } from '@/packages/lib/helpers/validation';
+import { signupRateLimiter } from '@/packages/lib/middleware/rate-limit';
+import { logger } from '@/packages/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
-
-    // Validation
-    if (!email || !password || !name) {
-      return handleBadRequest({ message: 'Email, password, and name are required' });
+    // Apply rate limiting (5 requests per 15 minutes per IP)
+    const rateLimitResult = await signupRateLimiter(request, 'signup');
+    if (rateLimitResult) {
+      return rateLimitResult; // Rate limit exceeded
     }
 
-    if (password.length < 8) {
-      return handleBadRequest({ message: 'Password must be at least 8 characters' });
+    const { email, password, name } = await request.json();
+
+    // Input validation
+    if (!email || !password || !name) {
+      logger.warn('Signup validation failed - missing fields', {
+        reason: 'missing_fields',
+        hasEmail: !!email,
+        hasPassword: !!password,
+        hasName: !!name,
+      });
+      return handleBadRequest({ message: getErrorMessage('BAD_REQUEST') });
+    }
+
+    // Validate email
+    if (!isValidEmail(email)) {
+      logger.warn('Signup validation failed - invalid email', {
+        reason: 'invalid_email',
+      });
+      return handleBadRequest({ message: getErrorMessage('INVALID_EMAIL') });
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      logger.warn('Signup validation failed - invalid password', {
+        reason: passwordValidation.error,
+      });
+      return handleBadRequest({
+        message: getErrorMessage(passwordValidation.error || 'INVALID_PASSWORD')
+      });
+    }
+
+    // Validate name
+    if (!isValidName(name)) {
+      logger.warn('Signup validation failed - invalid name', {
+        reason: 'invalid_name',
+      });
+      return handleBadRequest({ message: getErrorMessage('INVALID_NAME') });
     }
 
     // Check for existing user in database
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
 
     if (existingUser) {
-      return handleBadRequest({ message: 'An account with this email already exists' });
+      logger.warn('Signup conflict - email exists', {
+        reason: 'email_exists',
+      });
+      // Generic message to prevent email enumeration
+      return handleBadRequest({ message: 'Unable to create account' });
     }
 
     // Create Supabase auth user (service role to auto-confirm email)
     const supabaseAdmin = createServiceClient();
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: email.toLowerCase(),
       password,
       email_confirm: true, // Skip email verification
-      user_metadata: { name },
+      user_metadata: { name: name.trim() },
     });
 
     if (authError || !authData.user) {
-      console.error('Supabase auth creation error:', authError);
-      return handleBadRequest({
-        message: authError?.message || 'Failed to create user',
+      logger.error('Signup error - Supabase auth failed', authError, {
+        reason: 'supabase_auth_failed',
       });
+      return handleError({ message: getErrorMessage('INTERNAL_ERROR') });
     }
 
     // Hash password for database
@@ -48,9 +90,9 @@ export async function POST(request: NextRequest) {
     // Create User record in Prisma database
     const user = await db.user.create({
       data: {
-        email,
+        email: email.toLowerCase(),
         passwordHash,
-        name,
+        name: name.trim(),
       },
     });
 
@@ -59,12 +101,16 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.auth.admin.updateUserById(authData.user.id, {
       user_metadata: {
         userId: user.id, // Database user.id
-        name,
+        name: name.trim(),
       },
     });
 
+    logger.info('Signup successful', {
+      userId: user.id,
+    });
+
     return handleSuccess({
-      message: 'User created successfully',
+      message: 'Account created successfully',
       content: {
         userId: user.id,
         email: user.email,
@@ -72,7 +118,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Signup error:', error);
-    return handleError({ message: 'An error occurred during signup' });
+    logger.error('Signup error', error);
+    return handleError({ message: getErrorMessage('INTERNAL_ERROR') });
   }
 }

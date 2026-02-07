@@ -1,14 +1,22 @@
 import { NextRequest } from 'next/server';
-import { handleError, handleSuccess } from '@/packages/lib/helpers/api-response-handlers';
+import { handleError, handleSuccess, handleBadRequest, handleNotFound } from '@/packages/lib/helpers/api-response-handlers';
 import { getUser, verifyReportAccess } from '@/packages/lib/helpers/supabase/auth';
 import { db } from '@/packages/lib/prisma/prisma-client';
 import { inngest } from '@/packages/lib/inngest/client';
+import { getErrorMessage } from '@/packages/lib/helpers/validation';
+import { authenticatedReportAccessRateLimiter } from '@/packages/lib/middleware/rate-limit';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ reportId: string }> }
 ) {
   try {
+    // Apply rate limiting (100 requests per minute per user)
+    const rateLimitResult = await authenticatedReportAccessRateLimiter(request, 'cancel-report');
+    if (rateLimitResult) {
+      return rateLimitResult; // Rate limit exceeded
+    }
+
     const user = await getUser();
     const { reportId } = await params;
 
@@ -21,12 +29,23 @@ export async function POST(
     });
 
     if (!report) {
-      return handleError({ err: 'Report not found' });
+      console.warn('[CANCEL_REPORT_NOT_FOUND]', {
+        reportId,
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+      });
+      return handleNotFound({ message: getErrorMessage('RESOURCE_NOT_FOUND') });
     }
 
     // Check if report is still in progress
     if (report.status === 'COMPLETED' || report.status === 'FAILED' || report.status === 'CANCELLED') {
-      return handleError({ err: `Cannot cancel report with status: ${report.status}` });
+      console.warn('[CANCEL_INVALID_STATUS]', {
+        reportId,
+        userId: user.id,
+        status: report.status,
+        timestamp: new Date().toISOString(),
+      });
+      return handleBadRequest({ message: 'Cannot cancel this report' });
     }
 
     // Send cancellation event to Inngest
@@ -48,6 +67,12 @@ export async function POST(
       }
     });
 
+    console.info('[CANCEL_SUCCESS]', {
+      reportId,
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+    });
+
     return handleSuccess({
       message: 'Report generation cancelled successfully',
       content: {
@@ -56,7 +81,10 @@ export async function POST(
       }
     });
   } catch (error) {
-    console.error('Report cancellation error:', error);
-    return handleError({ err: error instanceof Error ? error.message : 'Failed to cancel report' });
+    console.error('[CANCEL_REPORT_ERROR]', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+    return handleError({ message: getErrorMessage('INTERNAL_ERROR') });
   }
 }

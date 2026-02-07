@@ -1,4 +1,5 @@
 import { generateWithRetry } from '@/packages/lib/services/ai-service';
+import { logger } from '@/packages/lib/logger';
 
 /**
  * Review Result Structure
@@ -117,12 +118,15 @@ Return ONLY valid JSON, no additional text.`;
 
     if (reviewResult.finalReport.length < report.length * 0.5) {
       // Report was cut too short - might be an error
-      console.warn('Reviewed report is significantly shorter than original');
+      logger.warn('Reviewed report is significantly shorter than original', {
+        originalLength: report.length,
+        reviewedLength: reviewResult.finalReport.length
+      });
     }
 
     return reviewResult;
   } catch (error) {
-    console.error('Report review failed:', error);
+    logger.error('Report review failed', error);
     throw new Error(`Failed to review report: ${(error as Error).message}`);
   }
 }
@@ -156,7 +160,7 @@ function parseReviewResponse(text: string, originalReport: string): ReviewResult
       },
     };
   } catch (error) {
-    console.error('Failed to parse review response:', error);
+    logger.error('Failed to parse review response', error);
 
     // Return original report with minimal review summary
     return {
@@ -224,7 +228,7 @@ Return ONLY valid JSON, no additional text.`;
 
     return JSON.parse(jsonText);
   } catch (error) {
-    console.error('Quick validation failed:', error);
+    logger.error('Quick validation failed', error);
     // Default to needing review if validation fails
     return {
       needsReview: true,

@@ -1,5 +1,6 @@
 import { generateWithRetry, parseJSONResponse } from '../services/ai-service';
 import type { ResearchFinding, Critique } from '../inngest/types';
+import { logger } from '../logger';
 
 /**
  * System prompt for the Critic agent
@@ -106,7 +107,7 @@ Provide your critique in valid JSON format.`;
 
     return critique;
   } catch (error) {
-    console.error('Failed to critique research:', error);
+    logger.error('Failed to critique research', error);
 
     // Return a safe fallback critique
     return {

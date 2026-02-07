@@ -1,5 +1,6 @@
 import { generateWithRetry } from '@/packages/lib/services/ai-service';
 import type { ResearchFinding, Critique } from '@/packages/lib/inngest/types';
+import { logger } from '@/packages/lib/logger';
 
 /**
  * Writer Agent
@@ -132,13 +133,17 @@ Return ONLY the markdown-formatted report. No preamble or meta-commentary.`;
     const hasSources = /##\s*Sources/i.test(report);
 
     if (!hasExecutiveSummary || !hasIntroduction || !hasSources) {
-      console.warn('Report may be missing required sections');
+      logger.warn('Report may be missing required sections', {
+        hasExecutiveSummary,
+        hasIntroduction,
+        hasSources
+      });
       // Continue anyway - the AI might have used slightly different formatting
     }
 
     return report;
   } catch (error) {
-    console.error('Report writing failed:', error);
+    logger.error('Report writing failed', error);
     throw new Error(`Failed to write report: ${(error as Error).message}`);
   }
 }

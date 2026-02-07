@@ -1,5 +1,6 @@
 import { generateWithRetry, parseJSONResponse } from '@/packages/lib/services/ai-service';
 import type { ResearchFinding, SearchResult } from '@/packages/lib/inngest/types';
+import { logger } from '@/packages/lib/logger';
 
 /**
  * Tavily Search API Response Types
@@ -70,7 +71,7 @@ async function searchWithTavily(
       score: result.score,
     }));
   } catch (error) {
-    console.error(`Tavily search failed for query "${query}":`, error);
+    logger.error(`Tavily search failed for query "${query}"`, error);
     throw new Error(`Web search failed: ${(error as Error).message}`);
   }
 }
@@ -153,7 +154,7 @@ Synthesize the above sources into a comprehensive answer to the question. Return
       confidence,
     };
   } catch (error) {
-    console.error('Synthesis failed:', error);
+    logger.error('Synthesis failed', error);
     throw new Error(`Failed to synthesize findings: ${(error as Error).message}`);
   }
 }
@@ -168,14 +169,14 @@ async function researchQuestion(
 ): Promise<ResearchFinding> {
   try {
     // Step 1: Search for sources
-    console.log(`Searching for: ${question}`);
+    logger.info('Starting research search', { question });
     const sources = await searchWithTavily(question, maxSources);
 
     if (sources.length === 0) {
       throw new Error('No sources found for this question');
     }
 
-    console.log(`Found ${sources.length} sources, synthesizing findings...`);
+    logger.info('Sources found, synthesizing findings', { sourceCount: sources.length });
 
     // Step 2: Synthesize findings with AI
     const { answer, confidence } = await synthesizeFindings(question, sources, tier);
@@ -189,7 +190,7 @@ async function researchQuestion(
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error(`Research failed for question "${question}":`, error);
+    logger.error('Research failed for question', error, { question });
     throw new Error(`Failed to research question: ${(error as Error).message}`);
   }
 }
@@ -227,7 +228,7 @@ export async function conductResearch(
     throw new Error('No research questions provided');
   }
 
-  console.log(`Starting research for ${questions.length} questions...`);
+  logger.info('Starting research for multiple questions', { questionCount: questions.length });
 
   const findings: ResearchFinding[] = [];
   const errors: Array<{ question: string; error: string }> = [];
@@ -247,14 +248,17 @@ export async function conductResearch(
             question: questions[idx],
             error: result.reason.message,
           });
-          console.error(`Failed to research question ${idx + 1}:`, result.reason);
+          logger.error(`Failed to research question ${idx + 1}`, result.reason);
         }
       });
     } else {
       // Research questions sequentially (more reliable, rate-limit friendly)
       for (let i = 0; i < questions.length; i++) {
         try {
-          console.log(`Researching question ${i + 1}/${questions.length}`);
+          logger.info(`Researching question ${i + 1}/${questions.length}`, {
+            current: i + 1,
+            total: questions.length
+          });
           const finding = await researchQuestion(
             questions[i],
             tier,
@@ -271,7 +275,7 @@ export async function conductResearch(
             question: questions[i],
             error: (error as Error).message,
           });
-          console.error(`Failed to research question ${i + 1}:`, error);
+          logger.error(`Failed to research question ${i + 1}`, error);
           // Continue with other questions even if one fails
         }
       }
@@ -291,10 +295,10 @@ export async function conductResearch(
       totalSources,
     };
 
-    console.log('Research complete:', summary);
+    logger.info('Research complete', summary);
 
     if (errors.length > 0) {
-      console.warn(`${errors.length} questions failed:`, errors);
+      logger.warn(`${errors.length} questions failed`, { errors });
     }
 
     // If all questions failed, throw error
@@ -309,7 +313,7 @@ export async function conductResearch(
       summary,
     };
   } catch (error) {
-    console.error('Research process failed:', error);
+    logger.error('Research process failed', error);
     throw new Error(`Research failed: ${(error as Error).message}`);
   }
 }
