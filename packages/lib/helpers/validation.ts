@@ -93,7 +93,7 @@ export function sanitizeTopic(topic: unknown): string {
 /**
  * Validates password strength
  * Requirements:
- * - Minimum 12 characters
+ * - Minimum 8 characters
  * - At least one uppercase letter
  * - At least one lowercase letter
  * - At least one number
@@ -106,8 +106,8 @@ export function validatePassword(password: string): { valid: boolean; error?: st
     return { valid: false, error: 'PASSWORD_REQUIRED' };
   }
 
-  // Minimum length requirement increased to 12 characters
-  if (password.length < 12) {
+  // Minimum length requirement increased to 8 characters
+  if (password.length < 8) {
     return { valid: false, error: 'PASSWORD_TOO_SHORT' };
   }
 
