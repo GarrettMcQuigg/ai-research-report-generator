@@ -4,7 +4,6 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org)
-[![Security Rating](https://img.shields.io/badge/Security-A--92%2F100-brightgreen)](https://github.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
@@ -14,7 +13,7 @@ This application uses a sophisticated multi-agent AI system orchestrated through
 ### Key Differentiators
 
 - **Enterprise Security**: A- security rating with comprehensive protection against OWASP Top 10 vulnerabilities
-- **Multi-Agent Orchestration**: 5 specialized AI agents working in concert through Inngest workflows
+- **Multi-Agent Orchestration**: 5 specialized AI agents (planner, researcher, critic, writer, reviewer) working in concert through Inngest workflows
 - **Real-time Progress Tracking**: Live status updates with animated indicators as research progresses
 - **Credit-Based System**: Fair usage with atomic transaction-based credit management
 - **Production-Ready**: Rate limiting, input validation, sanitization, and comprehensive error handling
@@ -23,8 +22,8 @@ This application uses a sophisticated multi-agent AI system orchestrated through
 
 ### Core Functionality
 
-- **Multi-Agent AI Architecture**: Coordinated AI agents for planning, research, validation, critique, and writing
-- **Automated Research Pipeline**: From topic submission to final report generation in 7 distinct phases
+- **Multi-Agent AI Architecture**: Coordinated AI agents for planning, research, critique, writing, and review
+- **Automated Research Pipeline**: From topic submission to final report generation in 6 distinct phases
 - **Real-time Progress Tracking**: Animated status indicators showing current research phase
 - **Report Management**:
   - Browse and revisit past research reports
@@ -59,14 +58,14 @@ This application uses a sophisticated multi-agent AI system orchestrated through
 
 1. **Research Planner**: Creates structured research strategies with targeted questions
 2. **Researcher**: Gathers information from multiple authoritative web sources via Tavily API
-3. **Validator**: Validates source credibility and data accuracy
-4. **Critic**: Analyzes findings for gaps, biases, and contradictions
-5. **Writer**: Compiles comprehensive reports with proper structure and citations
-6. **Reviewer**: Final quality check, formatting, and polish
+3. **Critic**: Analyzes findings for gaps, biases, and contradictions
+4. **Writer**: Compiles comprehensive reports with proper structure and citations
+5. **Reviewer**: Final quality check, formatting, and polish
 
 ## Tech Stack
 
 ### Frontend
+
 - **Framework**: [Next.js 15](https://nextjs.org) with App Router (React Server Components)
 - **Language**: TypeScript 5 with strict type checking
 - **Styling**: Tailwind CSS v4 with custom design system
@@ -74,6 +73,7 @@ This application uses a sophisticated multi-agent AI system orchestrated through
 - **Icons**: Lucide React
 
 ### Backend
+
 - **Authentication**: [Supabase Auth](https://supabase.com/docs/guides/auth)
 - **Database**: PostgreSQL with [Prisma ORM](https://www.prisma.io) v6
 - **AI Orchestration**: [Inngest](https://www.inngest.com) for durable workflow management
@@ -83,6 +83,7 @@ This application uses a sophisticated multi-agent AI system orchestrated through
 - **Web Search**: [Tavily API](https://tavily.com) for authoritative research data
 
 ### DevOps & Security
+
 - **Rate Limiting**: In-memory store with automatic cleanup (Redis-ready architecture)
 - **Logging**: Custom production-safe logger with sensitive data redaction
 - **Error Tracking**: Structured logging with searchable tags
@@ -145,21 +146,25 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 #### Getting API Keys
 
 **Supabase Setup:**
+
 1. Create a project at [supabase.com](https://supabase.com)
 2. Go to Project Settings > API for URL and anon key
 3. Go to Project Settings > Database for connection strings
 4. Copy `DATABASE_URL` and `DIRECT_DATABASE_URL` (for connection pooling)
 
 **OpenAI API Key:**
+
 1. Sign up at [platform.openai.com](https://platform.openai.com)
 2. Navigate to API Keys section
 3. Create a new secret key
 
 **Tavily API Key:**
+
 1. Sign up at [tavily.com](https://tavily.com)
 2. Get your API key from the dashboard
 
 **Inngest Setup:**
+
 1. Create an account at [inngest.com](https://www.inngest.com)
 2. Create a new app
 3. Copy event key and signing key from settings
@@ -203,17 +208,17 @@ This starts the Inngest dev server at [http://localhost:8288](http://localhost:8
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with Turbopack |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint code quality checks |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run prisma:push` | Push schema changes to database |
-| `npm run prisma:migrate` | Create and apply migrations |
-| `npm run prisma:studio` | Open Prisma Studio GUI |
-| `npm run prisma:seed` | Seed database with test data |
+| Command                   | Description                             |
+| ------------------------- | --------------------------------------- |
+| `npm run dev`             | Start development server with Turbopack |
+| `npm run build`           | Build for production                    |
+| `npm start`               | Start production server                 |
+| `npm run lint`            | Run ESLint code quality checks          |
+| `npm run prisma:generate` | Generate Prisma client                  |
+| `npm run prisma:push`     | Push schema changes to database         |
+| `npm run prisma:migrate`  | Create and apply migrations             |
+| `npm run prisma:studio`   | Open Prisma Studio GUI                  |
+| `npm run prisma:seed`     | Seed database with test data            |
 
 ## Project Structure
 
@@ -288,15 +293,15 @@ ai-research-report-generator/
 
 1. **Topic Submission**: User enters a research topic in the chat interface
 2. **Credit Verification**: Atomic transaction verifies and deducts 1 credit
-3. **Planning Phase (PLANNING)**: AI creates a structured research plan with targeted questions
-4. **Research Phase (RESEARCHING)**: Agents gather information from authoritative web sources
-5. **Validation Phase (VALIDATING)**: Validates source credibility and data accuracy
-6. **Critique Phase (CRITIQUING)**: Analyzes findings for gaps, biases, contradictions
-7. **Writing Phase (WRITING)**: Compiles comprehensive report with structure and citations
-8. **Review Phase (FORMATTING)**: Final quality check, formatting, and polish
-9. **Completion (COMPLETED)**: Full research report delivered with metadata
+3. **Planning Phase (PLANNING)**: Research Planner creates a structured research plan with targeted questions
+4. **Research Phase (RESEARCHING)**: Researcher gathers information from authoritative web sources via Tavily API
+5. **Critique Phase (CRITIQUING)**: Critic analyzes findings for gaps, biases, and contradictions
+6. **Writing Phase (WRITING)**: Writer compiles comprehensive report with structure and citations
+7. **Review Phase (FORMATTING)**: Reviewer performs final quality check, formatting, and polish
+8. **Completion (COMPLETED)**: Full research report delivered with metadata
 
 Each phase updates the report status in real-time with:
+
 - Animated status indicator in bottom-right corner
 - Status badge on report detail page
 - Real-time polling (5-second intervals)
@@ -305,6 +310,7 @@ Each phase updates the report status in real-time with:
 ### Cancellation Flow
 
 Users can cancel in-progress reports:
+
 1. Click X button in chat input (replaces Send button during generation)
 2. Cancel API validates ownership and sends Inngest cancellation event
 3. Database updated with CANCELLED status
@@ -323,6 +329,7 @@ Users can cancel in-progress reports:
 ### Main Models
 
 **User**
+
 ```prisma
 model User {
   id               String   @id @default(cuid())
@@ -340,6 +347,7 @@ model User {
 ```
 
 **Report**
+
 ```prisma
 model Report {
   id             String       @id @default(cuid())
@@ -360,18 +368,19 @@ model Report {
 ```
 
 **ReportStatus Enum**
+
 ```prisma
 enum ReportStatus {
   PENDING      // Initial state
   PLANNING     // Creating research plan
   RESEARCHING  // Gathering information
-  VALIDATING   // Validating sources
   CRITIQUING   // Analyzing findings
   WRITING      // Composing report
   FORMATTING   // Final review
   COMPLETED    // Finished successfully
   FAILED       // Error occurred
   CANCELLED    // User cancelled
+  VALIDATING   // Reserved for future use
 }
 ```
 
@@ -384,18 +393,21 @@ See [packages/lib/prisma/schema.prisma](./packages/lib/prisma/schema.prisma) for
 This application implements enterprise-grade security measures:
 
 #### Authentication & Authorization
+
 - Supabase Auth with secure session management
 - Middleware-level route protection
 - User ownership verification on all operations
 - Account status checking (inactive accounts blocked)
 
 #### Input Security
+
 - RFC 5322 compliant email validation
 - Strong password policy (12+ chars, uppercase, lowercase, numbers)
 - Topic sanitization (3-500 chars, XSS protection, control character removal)
 - Comprehensive validation framework
 
 #### API Security
+
 - Rate limiting on all endpoints (IP-based and user-based)
 - Atomic transactions for critical operations
 - Generic error messages to clients (no data leakage)
@@ -403,6 +415,7 @@ This application implements enterprise-grade security measures:
 - SQL injection protection via Prisma ORM
 
 #### Headers & CORS
+
 - X-Frame-Options: DENY (clickjacking protection)
 - X-Content-Type-Options: nosniff
 - X-XSS-Protection: 1; mode=block
@@ -411,6 +424,7 @@ This application implements enterprise-grade security measures:
 - CORS whitelist with preflight handling
 
 #### Compliance
+
 - ✅ OWASP Top 10 2021 compliant
 - ✅ PCI DSS ready
 - ✅ GDPR compliant (no PII leakage)
@@ -421,9 +435,11 @@ For detailed security audit results, see internal documentation.
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/signup` - User registration (rate limited: 5/15min per IP)
 
 ### Reports
+
 - `GET /api/reports` - List user's reports (rate limited: 100/min per user)
 - `POST /api/reports/generate` - Start report generation (rate limited: 10/hour per user)
 - `GET /api/reports/[reportId]` - Get specific report (rate limited: 100/min per user)
@@ -431,31 +447,32 @@ For detailed security audit results, see internal documentation.
 - `POST /api/reports/[reportId]/cancel` - Cancel in-progress report (rate limited: 100/min per user)
 
 ### Inngest
+
 - `POST /api/inngest` - Inngest webhook endpoint for workflow orchestration
 
 ## Environment Variables
 
 ### Required Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key for GPT models | `sk-...` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://...` |
-| `DIRECT_DATABASE_URL` | Direct database connection (pooling) | `postgresql://...` |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | `https://xxx.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key | `eyJ...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | `eyJ...` |
-| `INNGEST_EVENT_KEY` | Inngest event key | `evt_...` |
-| `INNGEST_SIGNING_KEY` | Inngest signing key | `signkey_...` |
-| `TAVILY_API_KEY` | Tavily API key for web search | `tvly-...` |
-| `NODE_ENV` | Environment mode | `development` or `production` |
-| `NEXT_PUBLIC_APP_URL` | Application URL | `http://localhost:3000` |
+| Variable                        | Description                          | Example                       |
+| ------------------------------- | ------------------------------------ | ----------------------------- |
+| `OPENAI_API_KEY`                | OpenAI API key for GPT models        | `sk-...`                      |
+| `DATABASE_URL`                  | PostgreSQL connection string         | `postgresql://...`            |
+| `DIRECT_DATABASE_URL`           | Direct database connection (pooling) | `postgresql://...`            |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                 | `https://xxx.supabase.co`     |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key             | `eyJ...`                      |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase service role key            | `eyJ...`                      |
+| `INNGEST_EVENT_KEY`             | Inngest event key                    | `evt_...`                     |
+| `INNGEST_SIGNING_KEY`           | Inngest signing key                  | `signkey_...`                 |
+| `TAVILY_API_KEY`                | Tavily API key for web search        | `tvly-...`                    |
+| `NODE_ENV`                      | Environment mode                     | `development` or `production` |
+| `NEXT_PUBLIC_APP_URL`           | Application URL                      | `http://localhost:3000`       |
 
 ### Optional Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_PRODUCTION_URL` | Production URL for CORS | - |
+| Variable                     | Description             | Default |
+| ---------------------------- | ----------------------- | ------- |
+| `NEXT_PUBLIC_PRODUCTION_URL` | Production URL for CORS | -       |
 
 ## Deployment
 
@@ -513,20 +530,24 @@ For detailed security audit results, see internal documentation.
 ### Common Issues
 
 **"Authentication failed" on API requests**
+
 - Verify Supabase environment variables are correct
 - Check that user session is valid
 - Ensure middleware is not blocking the request
 
 **Report generation stuck in PENDING**
+
 - Check Inngest dev server is running (`npx inngest-cli@latest dev`)
 - Verify Inngest environment variables
 - Check Inngest dashboard for workflow errors
 
 **Rate limit errors**
+
 - Wait for the rate limit window to reset (check `Retry-After` header)
 - Verify rate limit configuration in `packages/lib/middleware/rate-limit.ts`
 
 **Database connection errors**
+
 - Verify `DATABASE_URL` and `DIRECT_DATABASE_URL` are correct
 - Check Supabase project is active
 - Run `npm run prisma:generate` to regenerate client
