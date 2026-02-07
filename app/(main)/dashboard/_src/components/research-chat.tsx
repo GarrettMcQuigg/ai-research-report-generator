@@ -8,6 +8,10 @@ import { Send, Sparkles, ArrowRight, X } from 'lucide-react';
 import { TypingIndicator } from '@/packages/lib/components/typing-indicator';
 import { Message, MessageBubble } from '@/packages/lib/components/message-bubble';
 import { ReportStatusIndicator } from '@/packages/lib/components/report-status-indicator';
+import { fetcher } from '@/packages/lib/helpers/fetcher';
+import { API_REPORTS_GENERATE_ROUTE, API_REPORTS_GET_ROUTE, API_REPORTS_CANCEL_ROUTE } from '@/packages/lib/routes';
+import { HttpMethods } from '@/packages/lib/constants/http-methods';
+import { ReportStatus as PrismaReportStatus } from '@prisma/client';
 
 const EXAMPLE_PROMPTS = ['The impact of artificial intelligence on healthcare', 'Latest developments in renewable energy', 'History and future of quantum computing'];
 
@@ -115,9 +119,6 @@ export function ResearchChat() {
     setCurrentReportStatus('PENDING');
 
     try {
-      const { fetcher } = await import('@/packages/lib/helpers/fetcher');
-      const { API_REPORTS_GENERATE_ROUTE } = await import('@/packages/lib/routes');
-
       const response = await fetcher({
         url: API_REPORTS_GENERATE_ROUTE,
         requestBody: { topic }
@@ -161,10 +162,6 @@ export function ResearchChat() {
   };
 
   const pollReportStatus = async (reportId: string, topic: string) => {
-    const { fetcher } = await import('@/packages/lib/helpers/fetcher');
-    const { API_REPORTS_GET_ROUTE } = await import('@/packages/lib/routes');
-    const { HttpMethods } = await import('@/packages/lib/constants/http-methods');
-
     const maxAttempts = 60; // Poll for up to 5 minutes (60 * 5 seconds)
     let attempts = 0;
 
@@ -203,7 +200,7 @@ export function ResearchChat() {
       // Update status indicator
       setCurrentReportStatus(report.status as ReportStatus);
 
-      if (report.status === 'COMPLETED' && report.finalReport) {
+      if (report.status === PrismaReportStatus.COMPLETED && report.finalReport) {
         const reportMessage: Message = {
           id: Date.now().toString(),
           role: 'assistant',
@@ -218,7 +215,7 @@ export function ResearchChat() {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
-      } else if (report.status === 'FAILED') {
+      } else if (report.status === PrismaReportStatus.FAILED) {
         const errorMessage: Message = {
           id: Date.now().toString(),
           role: 'assistant',
@@ -233,7 +230,7 @@ export function ResearchChat() {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
-      } else if (report.status === 'CANCELLED') {
+      } else if (report.status === PrismaReportStatus.CANCELLED) {
         // Report was cancelled - already have the message, just stop polling
         setIsLoading(false);
         setCurrentReportId(null);
@@ -276,9 +273,6 @@ export function ResearchChat() {
     if (!currentReportId) return;
 
     try {
-      const { fetcher } = await import('@/packages/lib/helpers/fetcher');
-      const { API_REPORTS_CANCEL_ROUTE } = await import('@/packages/lib/routes');
-
       // Clear polling interval
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);

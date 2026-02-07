@@ -5,6 +5,7 @@ import { db } from '@/packages/lib/prisma/prisma-client';
 import { inngest } from '@/packages/lib/inngest/client';
 import { sanitizeTopic, getErrorMessage } from '@/packages/lib/helpers/validation';
 import { authenticatedGenerateRateLimiter } from '@/packages/lib/middleware/rate-limit';
+import { ReportStatus as PrismaReportStatus } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,6 @@ export async function POST(request: NextRequest) {
       return rateLimitResult; // Rate limit exceeded
     }
 
-    // getUser() already throws if no user, so no need for redundant check
     const user = await getUser();
     const { topic } = await request.json();
 
@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
     // Use transaction to atomically check credits and create report
     // This prevents race condition where multiple simultaneous requests could exceed credit limit
     const report = await db.$transaction(async (tx) => {
-      // Atomically decrement credits - this will fail if credits < 1
       const updatedUser = await tx.user.update({
         where: {
           id: user.id,
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: user.id,
           topic: sanitizedTopic,
-          status: 'PENDING'
+          status: PrismaReportStatus.PENDING
         }
       });
     }).catch((error) => {

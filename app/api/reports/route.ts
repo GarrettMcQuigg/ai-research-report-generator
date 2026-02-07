@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
 
     const user = await getUser();
 
-    // Fetch user's reports, ordered by most recent
     const reports = await db.report.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
